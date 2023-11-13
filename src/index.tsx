@@ -89,7 +89,11 @@ export interface ReactDiffViewerProps {
 
 export interface ReactDiffViewerState {
   // Array holding the expanded code folding.
+  lineInformation?: LineInformation[];
   expandedBlocks?: number[];
+  diffLines?: number[];
+  oldValue?: string;
+  newValue?: string;
 }
 
 class DiffViewer extends React.Component<
@@ -119,6 +123,10 @@ class DiffViewer extends React.Component<
 
     this.state = {
       expandedBlocks: [],
+      lineInformation: [],
+      diffLines: [],
+      oldValue: '',
+      newValue: '',
     };
   }
 
@@ -128,9 +136,10 @@ class DiffViewer extends React.Component<
    */
   public resetCodeBlocks = (): boolean => {
     if (this.state.expandedBlocks.length > 0) {
-      this.setState({
+      this.setState((prev) => ({
+        ...prev,
         expandedBlocks: [],
-      });
+      }));
       return true;
     }
     return false;
@@ -144,9 +153,10 @@ class DiffViewer extends React.Component<
     const prevState = this.state.expandedBlocks.slice();
     prevState.push(id);
 
-    this.setState({
+    this.setState((prev) => ({
+      ...prev,
       expandedBlocks: prevState,
-    });
+    }));
   };
 
   /**
@@ -505,14 +515,22 @@ class DiffViewer extends React.Component<
       compareMethod,
       linesOffset,
     } = this.props;
-    const { lineInformation, diffLines } = computeLineInformation(
-      oldValue,
-      newValue,
-      disableWordDiff,
-      compareMethod,
-      linesOffset,
-      this.props.alwaysShowLines,
-    );
+    if (oldValue !== this.state.oldValue || newValue !== this.state.newValue) {
+      const { lineInformation, diffLines } = computeLineInformation(
+        oldValue,
+        newValue,
+        disableWordDiff,
+        compareMethod,
+        linesOffset,
+        this.props.alwaysShowLines,
+      );
+
+      this.setState((prev) => ({
+        ...prev,
+        lineInformation,
+        diffLines,
+      }));
+    }
 
     const extraLines =
       this.props.extraLinesSurroundingDiff < 0
@@ -520,12 +538,12 @@ class DiffViewer extends React.Component<
         : Math.round(this.props.extraLinesSurroundingDiff);
 
     const { lineBlocks, blocks } = computeHiddenBlocks(
-      lineInformation,
-      diffLines,
+      this.state.lineInformation,
+      this.state.diffLines,
       extraLines,
     );
     const rowRenderer = (index: number) => {
-      const line = lineInformation[index];
+      const line = this.state.lineInformation[index];
       const lineIndex = index;
 
       if (this.props.showDiffOnly) {
@@ -563,7 +581,7 @@ class DiffViewer extends React.Component<
         width={1200}
         rowHeight={20}
         height={500}
-        rowCount={lineInformation.length}
+        rowCount={this.state.lineInformation.length}
         rowRenderer={({ index }) => rowRenderer(index)}
       />
     );
