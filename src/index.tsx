@@ -295,7 +295,7 @@ class DiffViewer extends React.Component<
             [this.styles.highlightedLine]: highlightLine,
           })}
         >
-          <pre className={this.styles.contentText}>{content}</pre>
+          <pre className={this.styles.contentText}>{`${content} hello`}</pre>
         </td>
       </React.Fragment>
     );
